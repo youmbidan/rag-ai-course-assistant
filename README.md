@@ -2,7 +2,7 @@
 
 ![Écran d'accueil](docs/screen.png)
 
-![Conversation avec sources](docs/screen2.png)
+![Conversation avec sources](docs/Screen2.png)
 A Retrieval-Augmented Generation (RAG) system that answers questions about AI/ML course material using only the content of provided PDF documents ,no hallucinated answers, with source citations for every response.
 
 ## Features
