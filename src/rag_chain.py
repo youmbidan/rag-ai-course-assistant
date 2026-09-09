@@ -18,20 +18,34 @@ Question : {question}
 
 Réponse :"""
 
+NO_CONTEXT_MESSAGE = "Cette information ne se trouve pas dans les cours indexés."
+
+
 def build_context(chunks):
-    "Fonction qui assemble les chunks récupérés en un seul bloc de texte, avec la source de chaque chunk."
     parts = []
     for chunk in chunks:
         source = chunk.metadata.get("source", "inconnu")
         page = chunk.metadata.get("page", "?")
         parts.append(f"[Source : {source}, page {page}]\n{chunk.page_content}")
-    return"\n\n".join(parts)
+    return "\n\n".join(parts)
 
-def answer_question(question):
-    """Pipeline complet : recherche des chunks pertinents, puis génération de la réponse."""
-    chunks = retrieve_chunks(question)
+
+def contextualize_question(question, history):
+    """Réécrit la question en tenant compte des derniers échanges, pour gérer les questions de suivi."""
+    if not history:
+        return question
+
+    recent = history[-4:]  # les 2 derniers échanges (question + réponse)
+    context_lines = "\n".join(f"{m['role']}: {m['content']}" for m in recent)
+    return f"Contexte de la conversation précédente :\n{context_lines}\n\nNouvelle question : {question}"
+
+
+def answer_question(question, history=None):
+    history = history or []
+    search_query = contextualize_question(question, history)
+
+    chunks = retrieve_chunks(search_query)
     context = build_context(chunks)
-
     prompt = PROMPT_TEMPLATE.format(context=context, question=question)
 
     response = client.chat.completions.create(

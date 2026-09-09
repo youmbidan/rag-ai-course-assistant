@@ -1,8 +1,9 @@
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-
+import shutil
+import os
 
 from src.config import PDF_FOLDER, DB_PATH, EMBEDDING_MODEL, CHUNK_SIZE, CHUNK_OVERLAP
 def load_pdfs(pdf_folder):
@@ -15,7 +16,7 @@ def load_pdfs(pdf_folder):
 
     for pdf_file in pdf_files:
         print(f"Chargement : {pdf_file.name}")
-        loader = PyPDFLoader(str(pdf_file))
+        loader = PDFPlumberLoader(str(pdf_file))
         documents.extend(loader.load())
     return documents
 
@@ -48,6 +49,19 @@ def main():
 
     build_vector_store(chunks)
     print(f"Index vectoriel créé et sauvegardé dans : {DB_PATH}")
+
+def rebuild_index():
+    """Vide complètement l'index existant et le reconstruit à partir des PDF restants dans le dossier."""
+    if os.path.exists(DB_PATH):
+        shutil.rmtree(DB_PATH)
+
+    pdf_files = list(PDF_FOLDER.glob("*.pdf"))
+    if not pdf_files:
+        return  # plus aucun PDF, on laisse l'index vide
+
+    documents = load_pdfs(PDF_FOLDER)
+    chunks = split_documents(documents)
+    build_vector_store(chunks)
 
 if __name__ == "__main__":
     main()

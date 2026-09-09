@@ -8,3 +8,5 @@ chromadb
 streamlit
 python-dotenv
 groq
+pdfplumber
+torchvision
